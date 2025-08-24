@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxonomic Lineage Explorer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .search-section {
+            margin-bottom: 30px;
+        }
+        
+        .search-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .search-group {
+            position: relative;
+        }
+        
+        .search-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .scientific-name {
+            font-style: italic;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .sample-species {
+            margin-bottom: 30px;
+        }
+        
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .sample-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .sample-item:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+        
+        .compare-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        
+        .compare-button:hover {
+            background: #218838;
+        }
+        
+        .compare-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .lineage-section {
+            display: none;
+        }
+        
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        
+        .comparison-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .lineage-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: end;
+        }
+        
+        .lineage-column {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .lineage-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .lineage-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .lineage-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        
+        .lineage-item.shared {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .lineage-item.unique {
+            background: white;
+            border-left-color: #007bff;
+        }
+        
+        .lineage-rank {
+            font-weight: bold;
+            color: #007bff;
+            width: 100px;
+            text-transform: capitalize;
+            font-size: 0.85em;
+        }
+        
+        .lineage-item.shared .lineage-rank {
+            color: #28a745;
+        }
+        
+        .lineage-name {
+            flex: 1;
+            font-size: 0.9em;
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        
+        .lineage-name:hover {
+            color: #0056b3;
+        }
+        
+        .lineage-taxid {
+            color: #666;
+            font-size: 0.8em;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .search-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .lineage-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Comparative Lineage Viewer</h1>
+        
+        <div class="search-section">
+            <h3>Compare Two Species</h3>
+            <div class="search-controls">
+                <div class="search-group">
+                    <label for="searchBox1">First Species</label>
+                    <input type="text" 
+                           id="searchBox1" 
+                           class="search-box" 
+                           placeholder="Type a species name (e.g., 'cat', 'dog')"
+                           autocomplete="off">
+                    <div id="searchResults1" class="search-results"></div>
+                </div>
+                <div class="search-group">
+                    <label for="searchBox2">Second Species (defaults to human)</label>
+                    <input type="text" 
+                           id="searchBox2" 
+                           class="search-box" 
+                           placeholder="Type a species name (defaults to human)"
+                           autocomplete="off">
+                    <div id="searchResults2" class="search-results"></div>
+                </div>
+            </div>
+            <button id="compareButton" class="compare-button" disabled>
+                Compare Lineages
+            </button>
+        </div>
+        
+        <div class="sample-species">
+            <h3>Or Choose from Common Species (will compare with human)</h3>
+            <div id="sampleGrid" class="sample-grid">
+                <div class="loading">Loading sample species...</div>
+            </div>
+        </div>
+        
+        <div id="lineageSection" class="lineage-section">
+            <div id="comparisonHeader" class="comparison-header"></div>
+            <div id="lineageComparison" class="lineage-comparison"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let searchTimeout1, searchTimeout2;
+        let selectedSpecies1 = null;
+        let selectedSpecies2 = { taxid: 9606, display_name: 'human' }; // Default to human
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleSpecies();
+            setupSearch();
+            updateCompareButton();
+        });
+        
+        // Setup search functionality
+        function setupSearch() {
+            setupSearchBox('searchBox1', 'searchResults1', 1);
+            setupSearchBox('searchBox2', 'searchResults2', 2);
+            
+            // Add compare button listener
+            document.getElementById('compareButton').addEventListener('click', function() {
+                if (selectedSpecies1 && selectedSpecies2) {
+                    compareSpecies(selectedSpecies1.taxid, selectedSpecies2.taxid);
+                }
+            });
+        }
+        
+        function setupSearchBox(boxId, resultsId, speciesNum) {
+            const searchBox = document.getElementById(boxId);
+            const searchResults = document.getElementById(resultsId);
+            
+            searchBox.addEventListener('input', function() {
+                const timeout = speciesNum === 1 ? searchTimeout1 : searchTimeout2;
+                clearTimeout(timeout);
+                
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    if (speciesNum === 1) {
+                        selectedSpecies1 = null;
+                    } else {
+                        selectedSpecies2 = { taxid: 9606, display_name: 'human' }; // Reset to human
+                    }
+                    updateCompareButton();
+                    return;
+                }
+                
+                const newTimeout = setTimeout(() => {
+                    searchSpecies(query, resultsId, speciesNum);
+                }, 300);
+                
+                if (speciesNum === 1) {
+                    searchTimeout1 = newTimeout;
+                } else {
+                    searchTimeout2 = newTimeout;
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+        
+        // Search for species
+        function searchSpecies(query, resultsId, speciesNum) {
+            const searchResults = document.getElementById(resultsId);
+            
+            fetch(`/api/search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        searchResults.innerHTML = `<div class="error">${data.error}</div>`;
+                        searchResults.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (data.species.length === 0) {
+                        searchResults.innerHTML = '<div class="search-result-item">No species found</div>';
+                    } else {
+                        searchResults.innerHTML = data.species.map(species => `
+                            <div class="search-result-item" onclick="selectSpecies(${species.taxid}, '${species.display_name}', ${speciesNum})">
+                                <div>${species.display_name}</div>
+                                <div class="scientific-name">${species.scientific_name}</div>
+                            </div>
+                        `).join('');
+                    }
+                    searchResults.style.display = 'block';
+                })
+                .catch(error => {
+                    searchResults.innerHTML = `<div class="error">Search failed: ${error.message}</div>`;
+                    searchResults.style.display = 'block';
+                });
+        }
+        
+        // Select a species from search results
+        function selectSpecies(taxid, displayName, speciesNum) {
+            const species = { taxid, display_name: displayName };
+            
+            if (speciesNum === 1) {
+                selectedSpecies1 = species;
+                document.getElementById('searchBox1').value = displayName;
+                document.getElementById('searchResults1').style.display = 'none';
+            } else {
+                selectedSpecies2 = species;
+                document.getElementById('searchBox2').value = displayName;
+                document.getElementById('searchResults2').style.display = 'none';
+            }
+            
+            updateCompareButton();
+        }
+        
+        // Update compare button state
+        function updateCompareButton() {
+            const compareButton = document.getElementById('compareButton');
+            const canCompare = selectedSpecies1 && selectedSpecies2;
+            
+            compareButton.disabled = !canCompare;
+            if (canCompare) {
+                compareButton.textContent = `Compare ${selectedSpecies1.display_name} vs ${selectedSpecies2.display_name}`;
+            } else {
+                compareButton.textContent = 'Select species to compare';
+            }
+        }
+        
+        // Load sample species
+        function loadSampleSpecies() {
+            const sampleGrid = document.getElementById('sampleGrid');
+            
+            fetch('/api/sample')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        sampleGrid.innerHTML = `<div class="error">${data.error}</div>`;
+                        return;
+                    }
+                    
+                    sampleGrid.innerHTML = data.species.map(species => `
+                        <div class="sample-item" onclick="compareWithHuman(${species.taxid}, '${species.display_name}')">
+                            <div>${species.display_name}</div>
+                            <div class="scientific-name">${species.scientific_name}</div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    sampleGrid.innerHTML = `<div class="error">Failed to load sample species: ${error.message}</div>`;
+                });
+        }
+        
+        // Quick compare with human
+        function compareWithHuman(taxid, displayName) {
+            selectedSpecies1 = { taxid, display_name: displayName };
+            selectedSpecies2 = { taxid: 9606, display_name: 'human' };
+            compareSpecies(taxid, 9606);
+        }
+        
+        // Compare two species
+        function compareSpecies(taxid1, taxid2) {
+            const lineageSection = document.getElementById('lineageSection');
+            const comparisonHeader = document.getElementById('comparisonHeader');
+            const lineageComparison = document.getElementById('lineageComparison');
+            
+            // Show loading
+            comparisonHeader.innerHTML = '<div class="loading">Loading comparison...</div>';
+            lineageComparison.innerHTML = '';
+            lineageSection.style.display = 'block';
+            
+            // Scroll to comparison section
+            lineageSection.scrollIntoView({ behavior: 'smooth' });
+            
+            fetch(`/api/compare/${taxid1}/${taxid2}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        comparisonHeader.innerHTML = `<div class="error">${data.error}</div>`;
+                        return;
+                    }
+                    
+                    displayComparison(data);
+                })
+                .catch(error => {
+                    comparisonHeader.innerHTML = `<div class="error">Failed to load comparison: ${error.message}</div>`;
+                });
+        }
+        
+        // Open Wikipedia page for a taxonomic name
+        function openWikipedia(name) {
+            // Clean the name for Wikipedia URL
+            const cleanName = name.trim().replace(/\s+/g, '_');
+            const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanName)}`;
+            window.open(wikipediaUrl, '_blank');
+        }
+        
+        // Display the comparative lineage
+        function displayComparison(data) {
+            const comparisonHeader = document.getElementById('comparisonHeader');
+            const lineageComparison = document.getElementById('lineageComparison');
+            
+            // Update header
+            const commonAncestor = data.comparison.common_ancestor;
+            comparisonHeader.innerHTML = `
+                <h2>${data.species1.display_name} vs ${data.species2.display_name}</h2>
+                <div class="comparison-info">
+                    Most recent common ancestor: <strong>${commonAncestor ? commonAncestor.name : 'None found'}</strong>
+                    ${commonAncestor ? `(${commonAncestor.rank})` : ''}
+                    <br>
+                    Total shared ancestors: <strong>${data.comparison.total_common_ancestors}</strong>
+                </div>
+            `;
+            
+            // Create side-by-side lineages
+            lineageComparison.innerHTML = `
+                <div class="lineage-column">
+                    <div class="lineage-title">${data.species1.display_name}</div>
+                    <div class="lineage-chain">
+                        ${data.species1.lineage.map(item => `
+                            <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
+                                <div class="lineage-rank">${item.rank}</div>
+                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'")}')" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                <div class="lineage-taxid">${item.taxid}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="lineage-column">
+                    <div class="lineage-title">${data.species2.display_name}</div>
+                    <div class="lineage-chain">
+                        ${data.species2.lineage.map(item => `
+                            <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
+                                <div class="lineage-rank">${item.rank}</div>
+                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'")}')" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                <div class="lineage-taxid">${item.taxid}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
