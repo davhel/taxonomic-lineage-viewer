@@ -20,8 +20,5 @@ COPY static/ ./static/
 # Expose port
 EXPOSE 5001
 
-# Set environment variable for port
-ENV PORT=5001
-
 # Run the Flask application
 CMD ["uv", "run", "python", "app.py"]

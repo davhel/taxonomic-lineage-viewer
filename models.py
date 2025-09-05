@@ -10,28 +10,10 @@ from typing import List, Dict, Optional
 class SimpleLineageViewer:
     def __init__(self, uri=None, user=None, password=None):
         """Initialize connection to Neo4j database"""
-        # Railway Neo4j connection handling
-        if not uri:
-            # Check for Railway private domain first (internal service communication)
-            if os.getenv("RAILWAY_PRIVATE_DOMAIN"):
-                # Use private domain for internal communication (port 7687 is standard for Bolt)
-                uri = f"bolt://{os.getenv('RAILWAY_PRIVATE_DOMAIN')}:7687"
-            # Fallback to Railway TCP proxy (external access)
-            elif os.getenv("RAILWAY_TCP_PROXY_DOMAIN") and os.getenv("RAILWAY_TCP_PROXY_PORT"):
-                uri = f"bolt://{os.getenv('RAILWAY_TCP_PROXY_DOMAIN')}:{os.getenv('RAILWAY_TCP_PROXY_PORT')}"
-            # Standard environment variables
-            elif os.getenv("NEO4J_URI") or os.getenv("NEO4J_URL"):
-                uri = os.getenv("NEO4J_URI") or os.getenv("NEO4J_URL")
-            # Local development fallback
-            else:
-                uri = "bolt://localhost:7687"
-        
-        # Neo4j credentials
-        user = user or os.getenv("NEO4J_USERNAME") or os.getenv("NEO4J_USER") or "neo4j"
-        password = password or os.getenv("NEO4J_PASSWORD") or "neotaxonomy"
-        
-        print(f"🔗 Attempting Neo4j connection to: {uri}")
-        print(f"👤 Using username: {user}")
+        # Use environment variables with fallback to defaults
+        uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        user = user or os.getenv("NEO4J_USERNAME", "neo4j")
+        password = password or os.getenv("NEO4J_PASSWORD", "neotaxonomy")
         
         try:
             self.driver = GraphDatabase.driver(uri, auth=(user, password))
