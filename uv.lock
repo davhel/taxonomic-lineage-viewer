@@ -282,7 +282,7 @@ wheels = [
 ]
 
 [[package]]
-name = "taxonomic-lineage-explorer"
+name = "taxonomic-lineage-viewer"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

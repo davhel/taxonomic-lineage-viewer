@@ -29,6 +29,16 @@ class SimpleLineageViewer:
         """Close the database connection"""
         self.driver.close()
     
+    def is_database_empty(self) -> bool:
+        """Check if the database has any taxonomy data"""
+        try:
+            with self.driver.session() as session:
+                result = session.run("MATCH (n:Taxon) RETURN count(n) as count LIMIT 1")
+                count = result.single()['count']
+                return count == 0
+        except Exception:
+            return True  # Assume empty if we can't check
+    
     def get_species_lineage(self, taxid: int) -> List[Dict]:
         """Get the complete lineage of a species from itself up to root"""
         with self.driver.session() as session:

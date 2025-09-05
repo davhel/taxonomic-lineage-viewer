@@ -361,6 +361,48 @@ class NCBIToNeo4jMigrator:
             if hasattr(self, 'driver'):
                 self.driver.close()
 
+class SimpleAutoInitializer:
+    """Simple auto-initialization for database setup"""
+    
+    def __init__(self):
+        self.is_running = False
+        self.is_complete = False
+        self.error = None
+        
+    def start_import(self):
+        """Start database import in background"""
+        if self.is_running:
+            return False
+            
+        self.is_running = True
+        self.is_complete = False
+        self.error = None
+        
+        # Start import in background thread
+        import threading
+        thread = threading.Thread(target=self._run_import, daemon=True)
+        thread.start()
+        return True
+    
+    def _run_import(self):
+        """Run the import process"""
+        try:
+            print("🔄 Starting NCBI taxonomy download and import...")
+            migrator = NCBIToNeo4jMigrator()
+            migrator.run_migration()
+            
+            self.is_complete = True
+            self.is_running = False
+            print("✅ Database import completed successfully!")
+            
+        except Exception as e:
+            self.error = str(e)
+            self.is_running = False
+            print(f"❌ Database import failed: {e}")
+
+# Global instance for app to use
+auto_initializer = SimpleAutoInitializer()
+
 def main():
     """Main entry point for NCBI to Neo4j migration"""
     migrator = NCBIToNeo4jMigrator()

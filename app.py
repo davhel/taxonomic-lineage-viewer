@@ -5,13 +5,25 @@ Clean, minimal interface to view and compare taxonomic lineages
 
 from flask import Flask, render_template, jsonify, request
 from models import SimpleLineageViewer
+from setup import auto_initializer
 
 app = Flask(__name__)
 
 # Initialize the lineage viewer
 try:
     lineage_viewer = SimpleLineageViewer()
-    print("🚀 Simple lineage viewer ready")
+    print("🚀 Connected to Neo4j database")
+    
+    # Check if database is empty and auto-start import if needed
+    if lineage_viewer.is_database_empty():
+        print("📦 Database is empty - starting automatic import...")
+        if auto_initializer.start_import():
+            print("🔄 Import started in background")
+        else:
+            print("❌ Failed to start import")
+    else:
+        print("✅ Database contains data - ready to serve")
+        
 except Exception as e:
     print(f"❌ Failed to initialize: {e}")
     lineage_viewer = None
@@ -94,6 +106,25 @@ def compare_two_species(taxid1, taxid2):
         return jsonify(comparison)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/import/status')
+def import_status():
+    """Get import status"""
+    status = {
+        'is_running': auto_initializer.is_running,
+        'is_complete': auto_initializer.is_complete,
+        'has_error': auto_initializer.error is not None,
+        'error_message': auto_initializer.error
+    }
+    
+    # Add database info if available
+    if lineage_viewer and not auto_initializer.is_running:
+        try:
+            status['database_empty'] = lineage_viewer.is_database_empty()
+        except:
+            status['database_empty'] = True
+    
+    return jsonify(status)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
