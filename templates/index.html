@@ -555,10 +555,18 @@
         }
         
         // Open Wikipedia page for a taxonomic name
-        function openWikipedia(name) {
-            // Clean the name for Wikipedia URL
-            const cleanName = name.trim().replace(/\s+/g, '_');
-            const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanName)}`;
+        function openWikipedia(name, taxid) {
+            let wikipediaUrl;
+            
+            // Special case for root (taxid 1) - point to LUCA
+            if (taxid === 1) {
+                wikipediaUrl = 'https://en.wikipedia.org/wiki/Last_universal_common_ancestor';
+            } else {
+                // Clean the name for Wikipedia URL
+                const cleanName = name.trim().replace(/\s+/g, '_');
+                wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(cleanName)}`;
+            }
+            
             window.open(wikipediaUrl, '_blank');
         }
         
@@ -587,7 +595,7 @@
                         ${data.species1.lineage.map(item => `
                             <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
                                 <div class="lineage-rank">${item.rank}</div>
-                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'")}')" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
                                 <div class="lineage-taxid">${item.taxid}</div>
                             </div>
                         `).join('')}
@@ -599,7 +607,7 @@
                         ${data.species2.lineage.map(item => `
                             <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
                                 <div class="lineage-rank">${item.rank}</div>
-                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'")}')" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
                                 <div class="lineage-taxid">${item.taxid}</div>
                             </div>
                         `).join('')}
