@@ -18,10 +18,20 @@ class NCBIToNeo4jMigrator:
         self.ncbi_ftp_url = "https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
         self.temp_dir = tempfile.mkdtemp()
         
-        # Use environment variables for Railway deployment
-        neo4j_uri = os.getenv('NEO4J_URI', 'bolt://localhost:7687')
-        neo4j_user = os.getenv('NEO4J_USERNAME', 'neo4j')
-        neo4j_password = os.getenv('NEO4J_PASSWORD', 'neotaxonomy')
+        # Railway Neo4j connection handling
+        neo4j_uri = None
+        if os.getenv("RAILWAY_PRIVATE_DOMAIN"):
+            # Use private domain for internal communication
+            neo4j_uri = f"bolt://{os.getenv('RAILWAY_PRIVATE_DOMAIN')}:7687"
+        elif os.getenv("RAILWAY_TCP_PROXY_DOMAIN") and os.getenv("RAILWAY_TCP_PROXY_PORT"):
+            # Use TCP proxy for external access
+            neo4j_uri = f"bolt://{os.getenv('RAILWAY_TCP_PROXY_DOMAIN')}:{os.getenv('RAILWAY_TCP_PROXY_PORT')}"
+        else:
+            # Standard environment variables or local fallback
+            neo4j_uri = os.getenv('NEO4J_URI') or os.getenv('NEO4J_URL') or 'bolt://localhost:7687'
+        
+        neo4j_user = os.getenv('NEO4J_USERNAME') or os.getenv('NEO4J_USER') or 'neo4j'
+        neo4j_password = os.getenv('NEO4J_PASSWORD') or 'neotaxonomy'
         
         self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
         print(f"Connected to Neo4j at {neo4j_uri}")

@@ -3,6 +3,7 @@ Flask app for taxonomic lineage viewing
 Clean, minimal interface to view and compare taxonomic lineages
 """
 
+import os
 from flask import Flask, render_template, jsonify, request
 from models import SimpleLineageViewer
 from setup import auto_initializer
@@ -127,4 +128,5 @@ def import_status():
     return jsonify(status)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    port = int(os.getenv('PORT', 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
