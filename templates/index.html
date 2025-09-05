@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxonomic Lineage Explorer</title>
+    <title>Taxonomic Lineage Viewer</title>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -20,10 +21,55 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        h1 {
-            text-align: center;
-            color: #333;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .header-credits {
+            text-align: right;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .credit-line {
+            margin-bottom: 5px;
+        }
+        
+        .profile-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .profile-link:hover {
+            text-decoration: underline;
+        }
+        
+        .github-button-container {
+            margin-top: 8px;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            
+            .header-credits {
+                text-align: center;
+                margin-top: 15px;
+            }
         }
         
         .search-section {
@@ -269,7 +315,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔬 Comparative Lineage Viewer</h1>
+        <div class="header">
+            <h1>🔬 Taxonomic Lineage Viewer</h1>
+            <div class="header-credits">
+                <div class="credit-line">Made by <a href="https://github.com/davhel" target="_blank" class="profile-link">Davide Heller</a></div>
+                <div class="credit-line" style="font-size: 12px; color: #888;">
+                    Built with GitHub Copilot
+                </div>
+                <div class="github-button-container">
+                    <a class="github-button" href="https://github.com/davhel/taxonomic-lineage-viewer" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star davhel/taxonomic-lineage-viewer on GitHub">Star</a>
+                </div>
+            </div>
+        </div>
         
         <div class="search-section">
             <h3>Compare Two Species</h3>
