@@ -449,12 +449,25 @@
                     if (data.species.length === 0) {
                         searchResults.innerHTML = '<div class="search-result-item">No species found</div>';
                     } else {
-                        searchResults.innerHTML = data.species.map(species => `
-                            <div class="search-result-item" onclick="selectSpecies(${species.taxid}, '${species.display_name}', ${speciesNum})">
+                        searchResults.innerHTML = data.species.map((species, index) => `
+                            <div class="search-result-item" data-taxid="${species.taxid}" data-display-name="${species.display_name.replace(/"/g, '&quot;')}" data-species-num="${speciesNum}">
                                 <div>${species.display_name}</div>
                                 <div class="scientific-name">${species.scientific_name}</div>
                             </div>
                         `).join('');
+                        
+                        // Add click event listeners to the new results
+                        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                            if (item.dataset.taxid) {
+                                item.addEventListener('click', function() {
+                                    selectSpecies(
+                                        parseInt(this.dataset.taxid), 
+                                        this.dataset.displayName, 
+                                        parseInt(this.dataset.speciesNum)
+                                    );
+                                });
+                            }
+                        });
                     }
                     searchResults.style.display = 'block';
                 })
