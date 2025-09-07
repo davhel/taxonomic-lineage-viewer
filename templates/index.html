@@ -575,11 +575,23 @@
                     }
                     
                     sampleGrid.innerHTML = data.species.map(species => `
-                        <div class="sample-item" onclick="compareWithHuman(${species.taxid}, '${species.display_name}')">
+                        <div class="sample-item" data-taxid="${species.taxid}" data-display-name="${species.display_name.replace(/"/g, '&quot;')}">
                             <div>${species.display_name}</div>
                             <div class="scientific-name">${species.scientific_name}</div>
                         </div>
                     `).join('');
+                    
+                    // Add click event listeners to sample species
+                    sampleGrid.querySelectorAll('.sample-item').forEach(item => {
+                        if (item.dataset.taxid) {
+                            item.addEventListener('click', function() {
+                                compareWithHuman(
+                                    parseInt(this.dataset.taxid), 
+                                    this.dataset.displayName
+                                );
+                            });
+                        }
+                    });
                 })
                 .catch(error => {
                     sampleGrid.innerHTML = `<div class="error">Failed to load sample species: ${error.message}</div>`;
