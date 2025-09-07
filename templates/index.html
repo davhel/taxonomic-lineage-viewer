@@ -531,6 +531,9 @@
             const comparisonHeader = document.getElementById('comparisonHeader');
             const lineageComparison = document.getElementById('lineageComparison');
             
+            // Hide the example species section
+            document.querySelector('.sample-species').style.display = 'none';
+            
             // Show loading
             comparisonHeader.innerHTML = '<div class="loading">Loading comparison...</div>';
             lineageComparison.innerHTML = '';
