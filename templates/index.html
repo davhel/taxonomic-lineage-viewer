@@ -211,10 +211,65 @@
         }
         
         .lineage-comparison {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .species-pair {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             align-items: end;
+        }
+        
+        .shared-foundation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 0;
+        }
+        
+        .convergence-funnel {
+            width: 100%;
+            height: 45px;
+            position: relative;
+            margin-bottom: -1px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .convergence-funnel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: #f8f9fa;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 25%, calc(50% + 200px) 100%, calc(50% - 200px) 100%, 0% 25%);
+        }
+        
+        .convergence-funnel::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            max-width: 100%;
+            height: 10px;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .shared-column {
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            border-top: none;
         }
         
         .lineage-column {
@@ -603,30 +658,51 @@
                 </div>
             `;
             
-            // Create side-by-side lineages
+            // Create two species columns resting on shared foundation
+            const sharedLineage = data.species1.lineage.filter(item => item.shared);
+            const unique1 = data.species1.lineage.filter(item => !item.shared);
+            const unique2 = data.species2.lineage.filter(item => !item.shared);
+            
             lineageComparison.innerHTML = `
-                <div class="lineage-column">
-                    <div class="lineage-title">${data.species1.display_name}</div>
-                    <div class="lineage-chain">
-                        ${data.species1.lineage.map(item => `
-                            <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
-                                <div class="lineage-rank">${item.rank}</div>
-                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
-                                <div class="lineage-taxid">${item.taxid}</div>
-                            </div>
-                        `).join('')}
+                <div class="species-pair">
+                    <div class="lineage-column">
+                        <div class="lineage-title">${data.species1.display_name}</div>
+                        <div class="lineage-chain">
+                            ${unique1.map(item => `
+                                <div class="lineage-item unique">
+                                    <div class="lineage-rank">${item.rank}</div>
+                                    <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                    <div class="lineage-taxid">${item.taxid}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="lineage-column">
+                        <div class="lineage-title">${data.species2.display_name}</div>
+                        <div class="lineage-chain">
+                            ${unique2.map(item => `
+                                <div class="lineage-item unique">
+                                    <div class="lineage-rank">${item.rank}</div>
+                                    <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                    <div class="lineage-taxid">${item.taxid}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
-                <div class="lineage-column">
-                    <div class="lineage-title">${data.species2.display_name}</div>
-                    <div class="lineage-chain">
-                        ${data.species2.lineage.map(item => `
-                            <div class="lineage-item ${item.shared ? 'shared' : 'unique'}">
-                                <div class="lineage-rank">${item.rank}</div>
-                                <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
-                                <div class="lineage-taxid">${item.taxid}</div>
-                            </div>
-                        `).join('')}
+                
+                <div class="shared-foundation">
+                    <div class="convergence-funnel"></div>
+                    <div class="shared-column">
+                        <div class="lineage-chain">
+                            ${sharedLineage.map(item => `
+                                <div class="lineage-item shared">
+                                    <div class="lineage-rank">${item.rank}</div>
+                                    <div class="lineage-name" onclick="openWikipedia('${item.display_name.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${item.taxid})" title="Click to open Wikipedia page for ${item.display_name}">${item.display_name}</div>
+                                    <div class="lineage-taxid">${item.taxid}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             `;
