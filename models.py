@@ -68,26 +68,51 @@ class SimpleLineageViewer:
             return lineage
     
     def search_species_by_name(self, search_query: str, limit: int = 10) -> List[Dict]:
-        """Search for species by name"""
+        """Search for species by name using full-text search for better relevance"""
         with self.driver.session() as session:
-            result = session.run("""
-                MATCH (t:Taxon)
-                WHERE (toLower(t.scientific_name) CONTAINS toLower($search_query) 
-                    OR toLower(t.common_name) CONTAINS toLower($search_query))
-                AND t.rank = 'species'
-                RETURN t.taxid as taxid,
-                       t.scientific_name as scientific_name,
-                       t.common_name as common_name,
-                       t.rank as rank
-                ORDER BY 
-                    CASE 
-                        WHEN toLower(t.common_name) STARTS WITH toLower($search_query) THEN 1
-                        WHEN toLower(t.scientific_name) STARTS WITH toLower($search_query) THEN 2
-                        ELSE 3
-                    END,
-                    t.scientific_name
-                LIMIT $limit
-            """, search_query=search_query, limit=limit)
+            try:
+                # Try full-text search first for better relevance
+                result = session.run("""
+                    CALL db.index.fulltext.queryNodes("taxon_names_fulltext", $search_query) 
+                    YIELD node, score
+                    WHERE node.rank = 'species'
+                    WITH node, score,
+                         CASE 
+                             WHEN toLower(node.common_name) = toLower($search_query) THEN 100 + score
+                             WHEN toLower(node.scientific_name) = toLower($search_query) THEN 90 + score
+                             WHEN toLower(node.common_name) STARTS WITH toLower($search_query) THEN 80 + score
+                             WHEN toLower(node.scientific_name) STARTS WITH toLower($search_query) THEN 70 + score
+                             ELSE score
+                         END as final_score
+                    RETURN node.taxid as taxid,
+                           node.scientific_name as scientific_name,
+                           node.common_name as common_name,
+                           node.rank as rank
+                    ORDER BY final_score DESC
+                    LIMIT $limit
+                """, search_query=search_query, limit=limit)
+            except:
+                # Fallback to original search if full-text index not available
+                result = session.run("""
+                    MATCH (t:Taxon)
+                    WHERE (toLower(t.scientific_name) CONTAINS toLower($search_query) 
+                        OR toLower(t.common_name) CONTAINS toLower($search_query))
+                    AND t.rank = 'species'
+                    RETURN t.taxid as taxid,
+                           t.scientific_name as scientific_name,
+                           t.common_name as common_name,
+                           t.rank as rank
+                    ORDER BY 
+                        CASE 
+                            WHEN toLower(t.common_name) = toLower($search_query) THEN 1
+                            WHEN toLower(t.scientific_name) = toLower($search_query) THEN 2
+                            WHEN toLower(t.common_name) STARTS WITH toLower($search_query) THEN 3
+                            WHEN toLower(t.scientific_name) STARTS WITH toLower($search_query) THEN 4
+                            ELSE 5
+                        END,
+                        t.scientific_name
+                    LIMIT $limit
+                """, search_query=search_query, limit=limit)
             
             species = []
             for record in result:

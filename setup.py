@@ -156,6 +156,12 @@ class NCBIToNeo4jMigrator:
             # Create index on scientific_name for searches
             session.run("CREATE INDEX taxon_name_index IF NOT EXISTS FOR (t:Taxon) ON (t.scientific_name)")
             
+            # Create full-text index for better search relevance
+            session.run("""
+                CREATE FULLTEXT INDEX taxon_names_fulltext IF NOT EXISTS 
+                FOR (t:Taxon) ON EACH [t.scientific_name, t.common_name]
+            """)
+            
         print("Indexes created.")
     
     def load_taxonomy_into_neo4j(self, extract_dir: str):
